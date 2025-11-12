@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Liumex Server — الخدمات الإلكترونية</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg: #0e1630; --card: rgba(255,255,255,0.04); --accent: #00bfff; --muted:#aab3c8; --glass: rgba(255,255,255,0.03);
+      --radius:14px; --text:#f3f6fb; font-family:'Cairo',sans-serif;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:linear-gradient(180deg,#071029 0%, #0e1630 100%);color:var(--text)}
+    header{padding:18px;display:flex;gap:12px;align-items:center;border-bottom:1px solid rgba(255,255,255,0.02);background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent)}
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo{width:46px;height:46px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#3aa0ff);display:flex;align-items:center;justify-content:center;color:#022033;font-weight:800}
+    .brand-title{font-weight:700;font-size:18px}
+    .container{max-width:980px;margin:18px auto;padding:0 16px}
+    .services-list{display:flex;flex-direction:column;gap:16px;margin-top:12px;padding-bottom:40px}
+    .service-card{background:var(--card);border-radius:var(--radius);padding:16px;box-shadow:0 8px 30px rgba(2,8,20,0.4);display:flex;gap:14px;align-items:flex-start;transition:transform .18s,box-shadow .18s}
+    .service-card:hover{transform:translateY(-6px);box-shadow:0 18px 50px rgba(0,0,0,0.45)}
+    .service-left{flex:1;text-align:right}
+    .service-title{font-size:18px;color:var(--accent);margin:0 0 6px}
+    .service-desc{color:var(--muted);font-size:14px;margin:0 0 6px}
+    .service-meta{display:flex;gap:8px;align-items:center;justify-content:flex-start;margin-top:6px}
+    .price{background:rgba(0,191,255,0.08);color:var(--accent);padding:6px 10px;border-radius:8px;font-weight:700}
+    .eta{color:var(--muted);font-size:13px}
+    .btn-area{width:160px;display:flex;align-items:center;justify-content:center}
+    .btn{background:var(--accent);color:#022033;border:none;padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:700;box-shadow:0 8px 26px rgba(0,191,255,0.08);width:100%}
+    .form-panel{margin-top:12px;background:var(--glass);padding:12px;border-radius:10px;display:none;gap:8px}
+    input,select,textarea{width:100%;padding:10px;border-radius:8px;border:none;background:rgba(255,255,255,0.03);color:var(--text);outline:none;font-size:14px}
+    .small{font-size:13px;color:var(--muted);margin-top:6px}
+    .ok{color:#7ef2a1;font-weight:700;margin-top:8px}
+    @media(min-width:720px){.service-card{align-items:center}.btn-area{width:200px}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand container">
+      <div class="logo" aria-hidden="true">LS</div>
+      <div>
+        <div class="brand-title">Liumex Server</div>
+        <div style="color:var(--muted);font-size:13px">مركز Liumex للخدمات — طلبات سريعة</div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="services-list" aria-live="polite">
+
+      <!-- Samsung FRP -->
+      <article class="service-card" id="card-samsung">
+        <div class="service-left">
+          <h3 class="service-title">🔓 إزالة FRP — سامسونج</h3>
+          <p class="service-desc">نقوم بفتح أجهزة سامسونج بسرعة. المطلوب: رقم IMEI (15 رقم).</p>
+          <div class="service-meta"><div class="price">16$</div><div class="eta">المدة: 1-5 دقائق</div></div>
+          <div class="form-panel" id="panel-samsung">
+            <div class="small">أدخل رقم IMEI (15 رقم)</div>
+            <input type="text" id="imeiSamsung" placeholder="356938035643809" inputmode="numeric" />
+            <input type="text" id="nameSamsung" placeholder="الاسم (اختياري)" />
+            <input type="tel" id="phoneSamsung" placeholder="رقم الهاتف (اختياري)" />
+            <button class="btn" onclick="submitService('samsung')">إرسال الطلب</button>
+            <div id="ok-samsung" class="ok" role="status" aria-live="polite"></div>
+          </div>
+        </div>
+        <div class="btn-area"><button class="btn" onclick="togglePanel('panel-samsung')">طلب الخدمة</button></div>
+      </article>
+
+      <!-- Honor FRP -->
+      <article class="service-card" id="card-honor">
+        <div class="service-left">
+          <h3 class="service-title">🔓 إزالة FRP — هونر</h3>
+          <p class="service-desc">نقبل SN أو IMEI لهواتف هونر لمعالجة الإزالة.</p>
+          <div class="service-meta"><div class="price">10$</div><div class="eta">المدة: ~20 دقيقة</div></div>
+          <div class="form-panel" id="panel-honor">
+            <div class="small">أدخل SN أو IMEI</div>
+            <input type="text" id="snHonor" placeholder="SN أو IMEI" />
+            <input type="text" id="nameHonor" placeholder="الاسم (اختياري)" />
+            <input type="tel" id="phoneHonor" placeholder="رقم الهاتف (اختياري)" />
+            <button class="btn" onclick="submitService('honor')">إرسال الطلب</button>
+            <div id="ok-honor" class="ok" role="status" aria-live="polite"></div>
+          </div>
+        </div>
+        <div class="btn-area"><button class="btn" onclick="togglePanel('panel-honor')">طلب الخدمة</button></div>
+      </article>
+
+      <!-- iCloud -->
+      <article class="service-card" id="card-icloud">
+        <div class="service-left">
+          <h3 class="service-title">☁️ فتح iCloud</h3>
+          <p class="service-desc">نحتاج الاسم ورقم الهاتف المرتبط للحساب. (قد نطلب معلومات إضافية لاحقاً).</p>
+          <div class="service-meta"><div class="price">15$</div><div class="eta">المدة: ~30 دقيقة</div></div>
+          <div class="form-panel" id="panel-icloud">
+            <div class="small">أدخل الاسم ورقم الهاتف</div>
+            <input type="text" id="icloudName" placeholder="الاسم الكامل" />
+            <input type="tel" id="icloudPhone" placeholder="رقم الهاتف" />
+            <input type="text" id="icloudImei" placeholder="IMEI/معلومات الجهاز (اختياري)" />
+            <button class="btn" onclick="submitService('icloud')">إرسال الطلب</button>
+            <div id="ok-icloud" class="ok" role="status" aria-live="polite"></div>
+          </div>
+        </div>
+        <div class="btn-area"><button class="btn" onclick="togglePanel('panel-icloud')">طلب الخدمة</button></div>
+      </article>
+
+      <!-- MDM Tecno/Infinix -->
+      <article class="service-card" id="card-mdm">
+        <div class="service-left">
+          <h3 class="service-title">🛠️ إزالة MDM — Tecno & Infinix</h3>
+          <p class="service-desc">أرسل طراز الجهاز وIMEI ونوع الحماية لنقيّم الحالة ونرد عليك.</p>
+          <div class="service-meta"><div class="price">حسب الحالة</div><div class="eta">المدة: يعتمد</div></div>
+          <div class="form-panel" id="panel-mdm">
+            <div class="small">اختر الماركة، أدخل الطراز والـ IMEI</div>
+            <select id="mdmBrand"><option value="tecno">Tecno</option><option value="infinix">Infinix</option></select>
+            <input type="text" id="mdmModel" placeholder="طراز (مثال: CAMON 17)" />
+            <input type="text" id="mdmImei" placeholder="IMEI" />
+            <button class="btn" onclick="submitService('mdm')">إرسال الطلب</button>
+            <div id="ok-mdm" class="ok" role="status" aria-live="polite"></div>
+          </div>
+        </div>
+        <div class="btn-area"><button class="btn" onclick="togglePanel('panel-mdm')">طلب الخدمة</button></div>
+      </article>
+
+    </section>
+  </main>
+
+  <script>
+    // ضع هنا رابط سيرفرك المنشور (مثال: https://liumex-server.onrender.com/api/request)
+    const API_URL = 'https://your-server.example.com/api/request';
+
+    function togglePanel(id){
+      document.querySelectorAll('.form-panel').forEach(p=>{ if(p.id !== id) p.style.display='none'; });
+      const el = document.getElementById(id);
+      el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+      setTimeout(()=> el.scrollIntoView({behavior:'smooth', block:'center'}),120);
+    }
+
+    async function submitService(type){
+      let payload = { service: '', name:'', phone:'', imei:'', sn:'', extra:'' }, okId='';
+      if(type==='samsung'){
+        const imei = document.getElementById('imeiSamsung').value.trim();
+        if(!imei || imei.length < 10){ alert('الرجاء إدخال رقم IMEI صالح'); return; }
+        payload = { service:'فتح سامسونج', imei, name:document.getElementById('nameSamsung').value.trim(), phone:document.getElementById('phoneSamsung').value.trim() };
+        okId='ok-samsung';
+      } else if(type==='honor'){
+        const sn = document.getElementById('snHonor').value.trim();
+        if(!sn){ alert('الرجاء إدخال SN أو IMEI'); return; }
+        payload = { service:'إزالة FRP هونر', sn, name:document.getElementById('nameHonor').value.trim(), phone:document.getElementById('phoneHonor').value.trim() };
+        okId='ok-honor';
+      } else if(type==='icloud'){
+        const name = document.getElementById('icloudName').value.trim();
+        const phone = document.getElementById('icloudPhone').value.trim();
+        if(!name || !phone){ alert('الرجاء إدخال الاسم ورقم الهاتف'); return; }
+        payload = { service:'فتح iCloud', name, phone, imei:document.getElementById('icloudImei').value.trim() };
+        okId='ok-icloud';
+      } else if(type==='mdm'){
+        const brand = document.getElementById('mdmBrand').value;
+        const model = document.getElementById('mdmModel').value.trim();
+        const imei = document.getElementById('mdmImei').value.trim();
+        if(!model || !imei){ alert('الرجاء إدخال الطراز والـ IMEI'); return; }
+        payload = { service:'إزالة MDM', extra:`brand:${brand}`, name:model, imei };
+        okId='ok-mdm';
+      } else return;
+
+      // واجهة المستخدم: جاري الإرسال
+      document.getElementById(okId).innerText = 'جاري إرسال الطلب...';
+
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if(data && data.success){
+          document.getElementById(okId).innerText = '✅ تم استلام طلبك، الطلب الآن تحت المعالجة';
+          // تفريغ الحقول في نفس اللوحة
+          const panel = document.getElementById(okId).closest('.form-panel') || document.getElementById(okId).parentNode;
+          panel.querySelectorAll('input').forEach(i=>i.value='');
+        } else {
+          document.getElementById(okId).innerText = '❌ حدث خطأ، حاول لاحقاً';
+        }
+      } catch(err){
+        console.error(err);
+        document.getElementById(okId).innerText = '❌ لم نتمكن من إرسال الطلب — تحقق من إعداد السيرفر';
+      }
+    }
+  </script>
+</body>
+</html>
