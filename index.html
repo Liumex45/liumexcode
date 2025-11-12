@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Liumex — دفع باينانس (محفظة)</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  body{font-family:'Cairo',sans-serif;background:#081127;color:#fff;padding:12px}
+  .card{background:rgba(255,255,255,0.04);padding:16px;border-radius:10px;margin:10px 0}
+  input,select,button,textarea{width:100%;padding:10px;border-radius:8px;border:none;background:rgba(255,255,255,0.06);color:#fff;margin:6px 0}
+  button{background:#00bfff;color:#022033;font-weight:700}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .small{font-size:13px;color:#aab3c8}
+  img.qr{max-width:220px;display:block;margin:10px auto}
+</style>
+</head>
+<body>
+<h2>Liumex — نظام الطلب والدفع (باينانس/محفظة)</h2>
+
+<div id="auth" class="card">
+  <h3>تسجيل / تسجيل دخول</h3>
+  <div id="registerBox">
+    <input id="regUser" placeholder="اسم المستخدم">
+    <input id="regEmail" placeholder="البريد الإلكتروني">
+    <input id="regPass" placeholder="كلمة المرور" type="password">
+    <button onclick="register()">إنشاء حساب</button>
+  </div>
+  <hr style="border-color:rgba(255,255,255,0.06)">
+  <div id="loginBox">
+    <input id="logUser" placeholder="اسم المستخدم أو البريد">
+    <input id="logPass" placeholder="كلمة المرور" type="password">
+    <button onclick="login()">تسجيل دخول</button>
+  </div>
+</div>
+
+<div id="panel" style="display:none">
+  <div class="card">
+    <p>مرحبًا <strong id="uname"></strong> — رصيد: $<span id="ubalance">0</span></p>
+    <button onclick="logout()">تسجيل خروج</button>
+  </div>
+
+  <div id="services" class="card">
+    <h3>الخدمات</h3>
+    <div id="servicesList"></div>
+  </div>
+
+  <div id="createOrderCard" class="card" style="display:none">
+    <h3>إنشاء طلب</h3>
+    <div class="small">الخدمة: <span id="selServiceTitle"></span></div>
+    <div id="payloadInputs"></div>
+    <button id="createOrderBtn" onclick="createOrder()">إنشاء الطلب وانتقل للدفع</button>
+  </div>
+
+  <div id="paymentCard" class="card" style="display:none">
+    <h3>الدفع عبر المحفظة ({CURRENCY})</h3>
+    <div id="payInfo"></div>
+    <img id="qrImg" class="qr" src="" alt="QR">
+    <div class="small">عند الدفع: انسخ TXID واطلب التأكيد</div>
+    <input id="txidInput" placeholder="أدخل TXID/Hash بعد الدفع">
+    <button onclick="confirmPayment()">تأكيد الدفع</button>
+  </div>
+
+  <div id="ordersCard" class="card">
+    <h3>طلباتك</h3>
+    <div id="ordersList"></div>
+  </div>
+</div>
+
+<script>
+let token = null;
+let services = [];
+let selectedService = null;
+let lastOrder = null;
+
+// replace placeholders (server-side will send currency/address via API if desired)
+const CURRENCY = '<?=CRYPTO_CURRENCY?>' || 'USDT-TRC20';
+
+// Auth functions
+async function register(){
+  const username = document.getElementById('regUser').value;
+  const email = document.getElementById('regEmail').value;
+  const password = document.getElementById('regPass').value;
+  const res = await fetch('/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,email,password})});
+  const data = await res.json();
+  if (data.token){ token = data.token; afterLogin(); alert('تم الإنشاء وتسجيل الدخول'); }
+  else alert(data.error || 'خطأ');
+}
+
+async function login(){
+  const username = document.getElementById('logUser').value;
+  const password = document.getElementById('logPass').value;
+  const res = await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password})});
+  const data = await res.json();
+  if (data.token){ token = data.token; afterLogin(); alert('تم تسجيل الدخول'); }
+  else alert(data.error || 'خطأ');
+}
+
+function logout(){ token=null; document.getElementById('panel').style.display='none'; document.getElementById('auth').style.display='block'; }
+
+async function afterLogin(){
+  document.getElementById('auth').style.display='none';
+  document.getElementById('panel').style.display='block';
+  const payload = JSON.parse(atob(token.split('.')[1]));
+  document.getElementById('uname').innerText = payload.username;
+  await loadServices();
+  await refreshOrders();
+}
+
+async function loadServices(){
+  const res = await fetch('/api/services');
+  services = await res.json();
+  const out = services.map(s => `<div style="border:1px solid rgba(255,255,255,0.03);padding:8px;margin:6px;border-radius:8px;">
+      <strong>${s.title}</strong><div class="small">السعر: $${s.price}</div>
+      <button onclick="selectService(${s.id})">اختر</button></div>`).join('');
+  document.getElementById('servicesList').innerHTML = out;
+}
+
+function selectService(id){
+  selectedService = services.find(s => s.id===id);
+  document.getElementById('createOrderCard').style.display='block';
+  document.getElementById('selServiceTitle').innerText = selectedService.title;
+  const payloadInputs = document.getElementById('payloadInputs');
+  payloadInputs.innerHTML = '';
+  if (selectedService.slug === 'samsung') {
+    payloadInputs.innerHTML = `<input id="imei" placeholder="IMEI (15 رقم)">`;
+  } else if (selectedService.slug === 'honor') {
+    payloadInputs.innerHTML = `<input id="sn" placeholder="SN (Serial)">`;
+  } else if (selectedService.slug === 'icloud') {
+    payloadInputs.innerHTML = `<input id="iname" placeholder="الاسم"><input id="iphone" placeholder="رقم الهاتف">`;
+  } else {
+    payloadInputs.innerHTML = `<textarea id="note" placeholder="التفاصيل"></textarea>`;
+  }
+}
+
+async function createOrder(){
+  if (!selectedService) return alert('اختر الخدمة');
+  let details = {};
+  if (selectedService.slug === 'samsung') details.imei = document.getElementById('imei').value.trim();
+  else if (selectedService.slug === 'honor') details.sn = document.getElementById('sn').value.trim();
+  else if (selectedService.slug === 'icloud') { details.name = document.getElementById('iname').value.trim(); details.phone = document.getElementById('iphone').value.trim(); }
+  else details.note = document.getElementById('note').value.trim();
+
+  const res = await fetch('/api/create-order', {
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+    body: JSON.stringify({ serviceId: selectedService.id, details })
+  });
+  const data = await res.json();
+  if (data.error) return alert(data.error);
+  lastOrder = data.orderId;
+  // show payment card
+  document.getElementById('paymentCard').style.display='block';
+  document.getElementById('payInfo').innerHTML = `<div class="small">ادفع ${data.price} ${data.currency} إلى العنوان التالي:</div>
+    <div style="word-break:break-all;background:rgba(255,255,255,0.03);padding:8px;border-radius:6px;margin:6px 0">${data.address}</div>`;
+  if (data.qrData) document.getElementById('qrImg').src = data.qrData;
+  else document.getElementById('qrImg').src = '';
+  // show txid input
+  document.getElementById('txidInput').value = '';
+  alert('تم إنشاء الطلب. انتقل للدفع ثم أعد تأكيد المعاملة (TXID).');
+  await refreshOrders();
+}
+
+async function confirmPayment(){
+  const txid = document.getElementById('txidInput').value.trim();
+  if (!txid || !lastOrder) return alert('أدخل TXID أو أنشئ طلباً أولاً');
+  const res = await fetch('/api/confirm-payment', {
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+    body: JSON.stringify({ orderId: lastOrder, txid })
+  });
+  const data = await res.json();
+  if (data.success) {
+    alert('تم إرسال TXID. سيتم التحقق من قبل الإدارة قريبًا.');
+    await refreshOrders();
+  } else alert(data.error || 'خطأ');
+}
+
+async function refreshOrders(){
+  const res = await fetch('/api/my-orders', { headers: {'Authorization':'Bearer '+token} });
+  const orders = await res.json();
+  const out = orders.map(o => `<div style="border:1px solid rgba(255,255,255,0.04);padding:8px;margin:6px;border-radius:8px;">
+    <strong>${o.serviceTitle}</strong> — $${o.price} — <em>${o.status}</em><br>
+    Details: ${o.details}<br>TXID: ${o.txid || '—'}<br>Order ID: ${o.id}
+  </div>`).join('');
+  document.getElementById('ordersList').innerHTML = out;
+}
+</script>
+</body>
+</html>
